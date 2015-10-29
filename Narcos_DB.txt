@@ -1,0 +1,75 @@
+create table usagedata(
+cust_id int,
+dev_id varchar(10),
+website varchar(100),
+usage_bytes long,
+start_time timestamp,
+end_time timestamp);
+
+
+
+ cUST_ID : 1
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (1, 'a', 'flipkart.com', 11274289152, '2015-10-29 00:00:01', '2015-10-29 01:30:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (1, 'b', 'littlegoa.com', 8053063680, '2015-10-29 00:30:01', '2015-10-29 01:30:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (1, 'c', 'twitter.com', 11274289152, '2015-10-29 01:30:00', '2015-10-29 02:30:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (1, 'a', 'jabong.com', 11274289152, '2015-10-29 00:00:01', '2015-10-29 04:00:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (1, 'b', 'paytm.com', 11274289152, '2015-10-29 02:00:01', '2015-10-29 04:00:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (1, 'c', 'youtube.com', 41274289152, '2015-10-29 06:00:01', '2015-10-29 07:30:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (1, 'a', 'wikipedia.com', 11274289152, '2015-10-29 06:30:01', '2015-10-29 07:30:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (1, 'b', '9gags.com', 31274289152, '2015-10-29 07:30:01', '2015-10-29 08:30:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (1, 'c', 'easports.com', 11274289152, '2015-10-29 06:00:01', '2015-10-29 10:00:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (1, 'a', 'verizon.com', 8053063680, '2015-10-29 08:00:01', '2015-10-29 10:00:00');
+
+cust_id : 2
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (2, 'd', 'google.com', 11274289152, '2015-10-29 00:00:01', '2015-10-29 01:30:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (2, 'd', 'flipkart.com', 11274289152, '2015-10-29 00:00:01', '2015-10-29 01:30:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (2, 'e', 'littlegoa.com', 8053063680, '2015-10-29 00:30:01', '2015-10-29 01:30:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (2, 'f', 'twitter.com', 11274289152, '2015-10-29 01:30:00', '2015-10-29 02:30:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (2, 'd', 'jabong.com', 11274289152, '2015-10-29 00:00:01', '2015-10-29 04:00:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (2, 'e', 'paytm.com', 11274289152, '2015-10-29 02:00:01', '2015-10-29 04:00:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (2, 'f', 'youtube.com', 21274289152, '2015-10-29 06:00:01', '2015-10-29 07:30:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (2, 'd', 'wikipedia.com', 11274289152, '2015-10-29 06:30:01', '2015-10-29 07:30:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (2, 'e', '9gags.com', 11274289152, '2015-10-29 07:30:01', '2015-10-29 08:30:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (2, 'f', 'easports.com', 11274289152, '2015-10-29 06:00:01', '2015-10-29 10:00:00');
+
+insert into usagedata(cust_id,dev_id,website,usage_bytes,start_time,end_time)
+values (2, 'd', 'verizon.com', 8053063680, '2015-10-29 08:00:01', '2015-10-29 10:00:00');
