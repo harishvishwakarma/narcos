@@ -1,0 +1,32 @@
+DELIMITER $$
+CREATE PROCEDURE fetcher()
+BEGIN
+DECLARE cid INT DEFAULT 0;
+DECLARE usg BIGINT DEFAULT 0;
+DECLARE fin INTEGER DEFAULT 0;
+DECLARE data_cursor CURSOR FOR
+  SELECT cust_id, SUM(usage_bytes) FROM usagedata GROUP BY cust_id;
+
+DECLARE CONTINUE HANDLER
+  FOR NOT FOUND SET fin = 1;
+  
+DECLARE CONTINUE HANDLER FOR 1062
+
+UPDATE tenmin set total_usage = usg where cust_id = cid;
+
+OPEN data_cursor;
+
+get_usage : LOOP
+
+FETCH data_cursor INTO cid, usg;
+
+IF fin = 1 THEN
+LEAVE get_usage;
+END IF;
+
+INSERT INTO tenmin(cust_id,total_usage,updated) values(cid, usg, SYSDATE());
+END LOOP get_usage;
+CLOSE data_cursor;
+END$$
+
+DELIMITER ;

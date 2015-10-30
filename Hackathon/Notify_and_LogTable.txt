@@ -1,0 +1,7 @@
+create table notify(
+cust_id int (10),
+useddata bigint,
+notify_status int default 0);
+
+create table logs_table(
+message varchar(100));

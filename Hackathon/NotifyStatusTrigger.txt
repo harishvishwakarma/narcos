@@ -1,0 +1,16 @@
+DELIMITER //
+
+CREATE TRIGGER before_insert
+BEFORE INSERT
+   ON notify FOR EACH ROW
+   
+BEGIN
+  INSERT INTO logs_table(
+  message) 
+  values
+  (CONCAT('Customer ID : ', NEW.cust_id, '   Usage : ', NEW.useddata));
+  
+  SET NEW.notify_status = 1 ;
+END; //
+
+DELIMITER ;

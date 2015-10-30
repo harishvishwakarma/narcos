@@ -1,0 +1,10 @@
+delimiter $$
+create trigger userextract BEFORE UPDATE on tenmin
+FOR EACH ROW
+BEGIN
+	IF OLD.total_usage + NEW.total_usage > OLD.target*1610612736 THEN
+		INSERT INTO notify(cust_id, useddata) values(OLD.cust_id, NEW.total_usage);
+		SET NEW.target = OLD.target + 5;
+	END IF;
+END;$$
+delimiter ;

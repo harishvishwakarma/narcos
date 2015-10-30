@@ -1,0 +1,37 @@
+create trigger userextract BEFORE UPDATE on tenmin
+FOR EACH ROW
+BEGIN
+	SET NEW.total_usage += OLD.total_usage;
+END;
+
+DELIMITER $$
+CREATE PROCEDURE fetcher()
+BEGIN
+DECLARE cid INT DEFAULT 0;
+DECLARE usg BIGINT DEFAULT 0;
+DECLARE fin INTEGER DEFAULT 0;
+DECLARE data_cursor CURSOR FOR
+  SELECT cust_id, SUM(usage_bytes) FROM usagedata where end_time > sysdate() - interval '10' minute GROUP BY cust_id;
+
+DECLARE CONTINUE HANDLER
+  FOR NOT FOUND SET fin = 1;
+  
+OPEN data_cursor;
+
+get_usage : LOOP
+
+FETCH data_cursor INTO cid, usg;
+
+IF fin = 1 THEN
+LEAVE get_usage;
+END IF;
+
+INSERT INTO tenmin(cust_id,total_usage,updated) values(cid, usg, SYSDATE()) ON DUPLICATE KEY UPDATE total_usage = total_usage + usg;
+END LOOP get_usage;
+CLOSE data_cursor;
+END$$
+
+DELIMITER ;
+
+
+ INSERT INTO tenmin(cust_id,total_usage,updated) values(1000, 1000000000, SYSDATE()) ON DUPLICATE KEY UPDATE total_usage = total_usage + 999;

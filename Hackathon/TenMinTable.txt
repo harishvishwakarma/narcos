@@ -1,0 +1,6 @@
+create table tenmin(
+cust_id int(10)PRIMARY KEY,
+total_usage BIGINT,
+updated TIMESTAMP,
+target int default 70
+);

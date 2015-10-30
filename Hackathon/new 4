@@ -1,0 +1,69 @@
+CREATE TRIGGER notifyusers AFTER INSERT ON notify
+FOR EACH ROW
+
+BEGIN
+
+	INSERT INTO logs_table(message) values('First Entry');
+
+END;
+
+DECLARE usg bigint;
+	usage := NEW.cust_id;
+
+DELIMITER //
+
+CREATE TRIGGER before_insert
+BEFORE INSERT
+   ON notify FOR EACH ROW
+   
+BEGIN
+  INSERT INTO logs_table(
+  message) 
+  values
+  (CONCAT('Customer ID : ', NEW.cust_id, '   Usage : ', NEW.useddata));
+  
+  SET NEW.notify_status = 1 ;
+END; //
+
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE delete_in_notify(cid int)
+BEGIN
+ UPDATE notify SET notify_status = 1 WHERE cust_id = cid;
+END //
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE fetcher2()
+BEGIN
+DECLARE cid INT DEFAULT 0;
+DECLARE usg BIGINT DEFAULT 0;
+DECLARE t TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+INSERT INTO tenmin(
+cust_id, 
+total_usage, 
+updated) 
+SELECT 
+cust_id,
+SUM(usage_bytes) into usg, 
+SYSDATE() 
+from usagedata GROUP BY cust_id 
+ON DUPLICATE KEY UPDATE total_usage = total_usage + usg;
+END$$
+
+DELIMITER ;
+INSERT INTO tenmin (
+    cust_id, 
+    id==,
+    price
+) 
+SELECT
+    7,
+    articleId,
+    1.50
+FROM
+    article 
+WHERE 
+    name LIKE 'ABC%';
