@@ -1,0 +1,14 @@
+
+create event stats_website
+on schedule every 1 minute
+do
+insert into tenminusage_website
+select cust_id, group_concat(`bywebsite` separator ",") as TT, now() from (select cust_id, concat_ws(' : ',website, SUM(usage_bytes)) AS bywebsite from usagedata where end_time > now() - interval '5' minute GROUP BY cust_id, website ORDER BY CUST_ID) AS websiteusage_tenmin group by cust_id;
+
+
+create event stats_device
+on schedule every 1 minute
+do
+insert into tenminusage_device
+select cust_id, group_concat(`bydevice` separator ",") as TT, now() from (select cust_id, concat_ws(' : ',dev_id, SUM(usage_bytes)) AS bydevice from usagedata where end_time > now() - interval '5' minute GROUP BY cust_id, dev_id ORDER BY CUST_ID) AS deviceusage_tenmin group by cust_id;
+

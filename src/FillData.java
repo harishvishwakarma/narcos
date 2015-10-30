@@ -12,7 +12,7 @@ import java.util.concurrent.Executors;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 public class FillData{
-	public static final int MAX_THREADS = 100;
+	public static final int MAX_THREADS = 10;
 
 
 
@@ -67,8 +67,8 @@ public class FillData{
 							Connection con = cpds.getConnection();
 							PreparedStatement pstmt;
 							pstmt = con.prepareStatement(stmt);
-							pstmt.setInt(1, random.nextInt(5000000));
-							pstmt.setInt(4, random.nextInt(99999999));
+							pstmt.setInt(1, random.nextInt(10000));
+							pstmt.setInt(4, random.nextInt(999999999));
 							Date start = new Date(System.currentTimeMillis()-random.nextInt(5)*random.nextInt(60)*random.nextInt(1000));
 							Date end = new Date(System.currentTimeMillis());
 							pstmt.setString(2, devices.get(random.nextInt(5)));
