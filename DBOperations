@@ -1,0 +1,181 @@
+create table usagedata(
+cust_id int,
+dev_id varchar(10),
+website varchar(100),
+usage_bytes bigint,
+start_time timestamp,
+end_time timestamp);
+--------------------------------------------------------------------------------
+create index usagedata_index
+on usagedata(end_time);
+--------------------------------------------------------------------------------
+create table tenmin(
+cust_id int,
+total_usage bigint,
+updated timestamp,
+target int default 70)
+--------------------------------------------------------------------------------
+create index tenmin_index
+on tenmin(cust_id);
+--------------------------------------------------------------------------------
+create table tenmin_records(
+cust_id int,
+total_usage bigint,
+updated timestamp);
+--------------------------------------------------------------------------------
+create index tenmin_records_index
+on tenmin_records(cust_id);
+--------------------------------------------------------------------------------
+DELIMITER $$
+CREATE PROCEDURE fetcher()
+BEGIN
+DECLARE cid INT DEFAULT 0;
+DECLARE usg BIGINT DEFAULT 0;
+DECLARE fin INTEGER DEFAULT 0;
+DECLARE data_cursor CURSOR FOR
+  SELECT cust_id, SUM(usage_bytes) FROM usagedata where end_time > now() - interval '5' minute GROUP BY cust_id;
+
+DECLARE CONTINUE HANDLER
+  FOR NOT FOUND SET fin = 1;
+  
+OPEN data_cursor;
+
+get_usage : LOOP
+
+FETCH data_cursor INTO cid, usg;
+
+IF fin = 1 THEN
+LEAVE get_usage;
+END IF;
+
+INSERT INTO tenmin(cust_id,total_usage,updated) values(cid, usg, SYSDATE()) ON DUPLICATE KEY UPDATE total_usage = total_usage + usg;
+END LOOP get_usage;
+CLOSE data_cursor;
+END$$
+
+DELIMITER ;
+--------------------------------------------------------------------------------
+create table tenmin_device(
+cust_id int,
+usagedata mediumtext,
+updated timestamp)
+--------------------------------------------------------------------------------
+create table tenmin_website(
+cust_id int,
+usagedata mediumtext,
+updated timestamp)
+--------------------------------------------------------------------------------
+create table notify(
+cust_id int (10),
+useddata bigint,
+notify_status int default 0);
+--------------------------------------------------------------------------------
+create table logs_table(
+message varchar(100));
+--------------------------------------------------------------------------------
+DELIMITER //
+
+CREATE TRIGGER before_insert
+BEFORE INSERT
+   ON notify FOR EACH ROW
+   
+BEGIN
+  INSERT INTO logs_table(
+  message) 
+  values
+  (CONCAT('Customer ID : ', NEW.cust_id, '   Usage : ', NEW.useddata));
+  
+  SET NEW.notify_status = 1 ;
+END; //
+
+DELIMITER ;
+--------------------------------------------------------------------------------
+delimiter $$
+create trigger userextract BEFORE UPDATE on tenmin
+FOR EACH ROW
+BEGIN
+	IF OLD.total_usage + NEW.total_usage > OLD.target*1610612736 THEN
+		INSERT INTO notify(cust_id, useddata) values(OLD.cust_id, NEW.total_usage);
+		SET NEW.target = OLD.target + 5;
+	END IF;
+END;$$
+delimiter ;
+--------------------------------------------------------------------------------
+CREATE EVENT event1
+ON SCHEDULE EVERY 5 MINUTE	
+DO
+CALL fetcher();
+--------------------------------------------------------------------------------
+CREATE EVENT event2
+ON SCHEDULE EVERY 5 MINUTE	
+DO
+insert into tenmin_device
+select cust_id, group_concat(`bydevice` separator ",") as TT, now() from (select cust_id, concat_ws(' : ',dev_id, SUM(usage_bytes)) AS bydevice from usagedata where end_time > now() - interval '5' minute GROUP BY cust_id, dev_id ORDER BY CUST_ID) AS usagedata group by cust_id;
+--------------------------------------------------------------------------------
+CREATE EVENT event3
+ON SCHEDULE EVERY 5 MINUTE	
+DO
+insert into tenmin_website
+select cust_id, group_concat(`bywebsite` separator ",") as TT, now() from (select cust_id, concat_ws(' : ',website, SUM(usage_bytes)) AS bywebsite from usagedata where end_time > now() - interval '5' minute GROUP BY cust_id, website ORDER BY CUST_ID) AS usagedata group by cust_id;
+--------------------------------------------------------------------------------
+CREATE EVENT event4
+ON SCHEDULE EVERY 5 MINUTE	
+DO
+INSERT INTO tenmin_records SELECT cust_id, SUM(usage_bytes), now() FROM usagedata where end_time > now() - interval '5' minute GROUP BY cust_id;
+----------------------------------------------------------------------------------
+delimiter /
+create or replace function hourly_stats(cust int)
+returns bigint 
+begin
+	declare datausage bigint;
+	select sum(total_usage) into datausage from tenmin_records where updated > now() - interval '1' hour and cust_id = cust;
+	return datausage;
+end;
+/
+delimiter ;
+--------------------------------------------------------------------------------
+delimiter /
+create or replace function daily_stats(cust int)
+returns bigint 
+begin
+	declare datausage bigint;
+	select sum(total_usage) into datausage from tenmin_records where updated > now() - interval '1' day and cust_id = cust;
+	return datausage;
+end;
+/
+delimiter ;
+--------------------------------------------------------------------------------
+delimiter /
+create or replace function weekly_stats(cust int)
+returns bigint 
+begin
+	declare datausage bigint;
+	select sum(total_usage) into datausage from tenmin_records where updated > now() - interval '7' day and cust_id = cust;
+	return datausage;
+end;
+/
+delimiter ;
+--------------------------------------------------------------------------------
+delimiter /
+create or replace function monthly_stats(cust int)
+returns bigint 
+begin
+	declare datausage bigint;
+	select sum(total_usage) into datausage from tenmin_records where updated > now() - interval '30' day and cust_id = cust;
+	return datausage;
+end;
+/
+--------------------------------------------------------------------------------
+create table exception_customers(
+cust_id int);
+--------------------------------------------------------------------------------
+create table exception_websites(
+websites varchar(100)
+);
+--------------------------------------------------------------------------------
+create table exception_timeperiod(
+start_time timestamp,
+end_time timestamp);
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+select cust_id,sum(total_usage),hour(updated) from tenmin_records group by cust_id, hour(updated);
