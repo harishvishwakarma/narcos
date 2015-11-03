@@ -13,7 +13,7 @@ create table tenmin(
 cust_id int,
 total_usage bigint,
 updated timestamp,
-target int default 70)
+target int default 70);
 --------------------------------------------------------------------------------
 create index tenmin_index
 on tenmin(cust_id);
@@ -28,42 +28,27 @@ on tenmin_records(cust_id);
 --------------------------------------------------------------------------------
 DELIMITER $$
 CREATE PROCEDURE fetcher()
-BEGIN
-DECLARE cid INT DEFAULT 0;
-DECLARE usg BIGINT DEFAULT 0;
-DECLARE fin INTEGER DEFAULT 0;
-DECLARE data_cursor CURSOR FOR
-  SELECT cust_id, SUM(usage_bytes) FROM usagedata where end_time > now() - interval '5' minute GROUP BY cust_id;
-
-DECLARE CONTINUE HANDLER
-  FOR NOT FOUND SET fin = 1;
-  
-OPEN data_cursor;
-
-get_usage : LOOP
-
-FETCH data_cursor INTO cid, usg;
-
-IF fin = 1 THEN
-LEAVE get_usage;
-END IF;
-
-INSERT INTO tenmin(cust_id,total_usage,updated) values(cid, usg, SYSDATE()) ON DUPLICATE KEY UPDATE total_usage = total_usage + usg;
-END LOOP get_usage;
-CLOSE data_cursor;
+BEGIN 
+INSERT INTO tenmin(cust_id,total_usage,updated) SELECT cust_id, SUM(usage_bytes), SYSDATE() FROM usagedata where end_time > now() - interval '5' minute GROUP BY cust_id ON DUPLICATE KEY UPDATE total_usage = total_usage + values(total_usage);
 END$$
 
 DELIMITER ;
 --------------------------------------------------------------------------------
-create table tenmin_device(
+create table tenminusage_website(
 cust_id int,
-usagedata mediumtext,
-updated timestamp)
+usage_bywebsite longtext,
+updated timestamp);
 --------------------------------------------------------------------------------
-create table tenmin_website(
+create index tenminusage_website_index
+on tenminusage_website(cust_id);
+--------------------------------------------------------------------------------
+create table tenminusage_device(
 cust_id int,
-usagedata mediumtext,
-updated timestamp)
+usage_bydevice longtext,
+updated timestamp);
+--------------------------------------------------------------------------------
+create index tenminusage_device_index
+on tenminusage_device(cust_id);
 --------------------------------------------------------------------------------
 create table notify(
 cust_id int (10),
@@ -91,12 +76,23 @@ END; //
 DELIMITER ;
 --------------------------------------------------------------------------------
 delimiter $$
-create trigger userextract BEFORE UPDATE on tenmin
+create or replace trigger userextract BEFORE UPDATE on tenmin
 FOR EACH ROW
 BEGIN
-	IF OLD.total_usage + NEW.total_usage > OLD.target*1610612736 THEN
+	IF OLD.total_usage + NEW.total_usage >= OLD.target*1610612736 THEN
 		INSERT INTO notify(cust_id, useddata) values(OLD.cust_id, NEW.total_usage);
 		SET NEW.target = OLD.target + 5;
+	END IF;
+END;$$
+delimiter ;
+--------------------------------------------------------------------------------
+delimiter $$
+create or replace trigger userextract2 BEFORE INSERT on tenmin
+FOR EACH ROW
+BEGIN
+	IF NEW.total_usage + NEW.total_usage >= NEW.target*1610612736 THEN
+		INSERT INTO notify(cust_id, useddata) values(NEW.cust_id, NEW.total_usage);
+		SET NEW.target = NEW.target + 5;
 	END IF;
 END;$$
 delimiter ;
@@ -122,6 +118,18 @@ CREATE EVENT event4
 ON SCHEDULE EVERY 5 MINUTE	
 DO
 INSERT INTO tenmin_records SELECT cust_id, SUM(usage_bytes), now() FROM usagedata where end_time > now() - interval '5' minute GROUP BY cust_id;
+----------------------------------------------------------------------------------
+CREATE EVENT event5
+ON SCHEDULE EVERY 5 MINUTE	
+DO
+insert into tenminusage_website
+select cust_id, group_concat(`bywebsite` separator ",") as TT, now() from (select cust_id, concat_ws(' : ',website, SUM(usage_bytes)) AS bywebsite from usagedata where end_time > now() - interval '5' minute GROUP BY cust_id, website ORDER BY CUST_ID) AS websiteusage_tenmin group by cust_id;
+----------------------------------------------------------------------------------
+CREATE EVENT event6
+ON SCHEDULE EVERY 5 MINUTE	
+DO
+insert into tenminusage_device
+select cust_id, group_concat(`bydevice` separator ",") as TT, now() from (select cust_id, concat_ws(' : ',dev_id, SUM(usage_bytes)) AS bydevice from usagedata where end_time > now() - interval '5' minute GROUP BY cust_id, dev_id ORDER BY CUST_ID) AS deviceusage_tenmin group by cust_id;
 ----------------------------------------------------------------------------------
 delimiter /
 create or replace function hourly_stats(cust int)
